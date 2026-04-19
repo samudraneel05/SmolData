@@ -1,9 +1,9 @@
 #!/bin/bash
 # scripts/download_datasets.sh
-# Auto-download CIFAR-10, CIFAR-100, SVHN (CINIC-10 and Tiny-ImageNet require manual download)
+# Auto-download CIFAR-10, CIFAR-100, SVHN
+# Works on Kaggle, Colab, and local (no venv required)
 
 set -e
-source .venv/bin/activate
 mkdir -p data
 
 python3 - <<'EOF'

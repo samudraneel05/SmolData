@@ -29,7 +29,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from ..utils.logging import CSVLogger, get_logger
+from utils.logging import CSVLogger, get_logger
 
 logger = get_logger("ssl_pretrain")
 

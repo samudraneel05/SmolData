@@ -22,8 +22,8 @@ from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from ..training.augmentations import Mixup
-from ..utils.logging import CSVLogger, get_logger
+from .augmentations import Mixup
+from utils.logging import CSVLogger, get_logger
 
 logger = get_logger("supervised")
 

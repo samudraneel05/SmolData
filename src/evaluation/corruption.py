@@ -70,7 +70,7 @@ def load_cifar_c(
     x = torch.from_numpy(images).permute(0, 3, 1, 2).float() / 255.0
 
     if normalize:
-        from ..training.augmentations import DATASET_STATS
+        from training.augmentations import DATASET_STATS
         stats = DATASET_STATS.get(dataset, DATASET_STATS["cifar10"])
         mean = torch.tensor(stats["mean"]).view(1, 3, 1, 1)
         std = torch.tensor(stats["std"]).view(1, 3, 1, 1)

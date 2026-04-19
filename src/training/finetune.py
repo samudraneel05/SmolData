@@ -16,8 +16,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from .supervised import build_optimizer, build_scheduler, train_one_epoch, evaluate
-from ..training.augmentations import Mixup
-from ..utils.logging import CSVLogger, get_logger
+from .augmentations import Mixup
+from utils.logging import CSVLogger, get_logger
 from torch.cuda.amp import GradScaler
 from pathlib import Path
 import time

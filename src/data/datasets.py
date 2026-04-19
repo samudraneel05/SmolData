@@ -25,7 +25,7 @@ from torch.utils.data import DataLoader, Dataset
 import torchvision
 import torchvision.transforms as T
 
-from ..training.augmentations import build_transforms, DATASET_STATS
+from training.augmentations import build_transforms, DATASET_STATS
 
 
 DATA_ROOT = Path(os.environ.get("SMOLDATA_ROOT", "./data"))
