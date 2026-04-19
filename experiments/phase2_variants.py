@@ -81,8 +81,28 @@ def run_variant(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     fraction = cfg.get("dataset_fraction", 1.0)
+    use_wandb = cfg.get("use_wandb", False)
+    run_name = f"v{variant}_{arch}_{dataset}_s{seed}"
+
     logger.info(f"Running Variant {variant} | {arch} | {dataset} "
                 f"(fraction={fraction:.0%}) | seed={seed} | device={device}")
+
+    # ── Init W&B run ──────────────────────────────────────────────────────────
+    if use_wandb:
+        import wandb
+        wandb.init(
+            entity=cfg.get("wandb_entity", None),
+            project=cfg.get("wandb_project", "smoldata"),
+            name=run_name,
+            config={
+                "variant": variant, "arch": arch, "dataset": dataset,
+                "seed": seed, "fraction": fraction,
+                **{k: v for k, v in cfg.items()
+                   if k not in ("wandb_project", "wandb_entity", "use_wandb")},
+            },
+            tags=[f"variant-{variant}", arch, dataset, f"seed-{seed}"],
+            reinit=True,
+        )
 
     train_loader, val_loader, num_classes, img_size = get_dataset(
         dataset,
@@ -97,14 +117,11 @@ def run_variant(
         cfg["ssl_epochs"] = 1
 
     model = build_model(arch, variant, num_classes, img_size)
-
-    run_name = f"v{variant}_{arch}_{dataset}_s{seed}"
     save_dir = f"checkpoints/phase2/{run_name}"
 
     if variant in ("B", "D"):
         # Self-supervised pre-training first
         transforms, n_crops = dino_multicrop_transforms(img_size=img_size, dataset_name=dataset)
-        # Rebuild train_loader with raw PIL images (no supervised transforms)
         import torchvision
         raw_ds = getattr(torchvision.datasets, {
             "cifar10": "CIFAR10", "cifar100": "CIFAR100"
@@ -114,17 +131,23 @@ def run_variant(
         ssl_loader = DL(mc_ds, batch_size=cfg["batch_size"], shuffle=True,
                         num_workers=cfg["num_workers"], drop_last=True)
 
-        cfg["embed_dim"] = 192  # ViT-Tiny embed dim
-        model = pretrain_dino(model, ssl_loader, cfg, save_dir=save_dir, run_name=run_name)
-
-        # Supervised fine-tuning with pre-trained weights
-        metrics = finetune(model, train_loader, val_loader, cfg, save_dir=save_dir, run_name=run_name)
+        cfg["embed_dim"] = 192
+        model = pretrain_dino(model, ssl_loader, cfg, save_dir=save_dir,
+                              run_name=run_name, use_wandb=use_wandb)
+        metrics = finetune(model, train_loader, val_loader, cfg, save_dir=save_dir,
+                           run_name=run_name, use_wandb=use_wandb)
     else:
-        # Variants A and C: supervised from scratch
-        metrics = train(model, train_loader, val_loader, cfg, save_dir=save_dir, run_name=run_name)
+        metrics = train(model, train_loader, val_loader, cfg, save_dir=save_dir,
+                        run_name=run_name, use_wandb=use_wandb)
 
     metrics.update({"variant": variant, "arch": arch, "dataset": dataset, "seed": seed})
     logger.info(f"  → best val_acc={metrics.get('val_acc', 0):.4f}")
+
+    if use_wandb:
+        import wandb
+        wandb.log({"best_val_acc": metrics.get("val_acc", 0)})
+        wandb.finish()
+
     return metrics
 
 
