@@ -36,7 +36,9 @@ num_eval_samples_cka: 500  # was 1000
 
 # Compute settings
 num_workers: 2          # Colab has 2 CPU cores reliably
-use_wandb: false
+use_wandb: true         # enabled — add WANDB_API_KEY to Kaggle/Colab Secrets
+wandb_project: smoldata
+wandb_entity: samudraneel05-motilal-nehru-national-institute-of-technology
 use_amp: true           # Keep AMP — saves ~40% GPU memory
 
 # ── Dataset profile ───────────────────────────────────────────────────────────
