@@ -1,0 +1,55 @@
+# configs/lite.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# Kaggle / Google Colab profile — single T4/P100 GPU, ~16GB RAM
+# Designed to complete full Phase 1+2 in < 8 hours on one GPU.
+# ─────────────────────────────────────────────────────────────────────────────
+
+optimizer: adam
+lr: 0.002
+weight_decay: 0.05
+
+# Reduced epoch counts for single-GPU constraint
+epochs: 50              # was 100
+warmup_epochs: 5        # was 10
+clip_grad: 1.0
+label_smoothing: 0.1
+
+# Smaller batch for 16GB GPU RAM
+batch_size: 64          # was 256
+
+# Augmentation (unchanged — fairness requires identical pipeline)
+mixup_alpha: 0.4
+cutmix_alpha: 1.0
+mixup_prob: 1.0
+mixup_switch_prob: 0.5
+
+# Self-supervised pre-training — highly reduced
+ssl_epochs: 50          # was 200 (enough to inject inductive bias on small data)
+ssl_lr: 0.0005
+ema_momentum: 0.996
+dino_out_dim: 8192      # was 65536 (massive RAM saving, appropriate for small data)
+n_crops: 4              # was 8 (2 global + 2 local)
+
+# Evaluation
+seeds: [42]             # was [42, 1337, 2024]; use 1 seed for budget runs
+num_eval_samples_cka: 500  # was 1000
+
+# Compute settings
+num_workers: 2          # Colab has 2 CPU cores reliably
+use_wandb: false
+use_amp: true           # Keep AMP — saves ~40% GPU memory
+
+# ── Dataset profile ───────────────────────────────────────────────────────────
+# Use a truly small 10k-sample subset of CIFAR-10 and CIFAR-100.
+# This is methodologically sound: the paper studies "small datasets",
+# so 10k is a legitimate experimental regime (≈200 samples/class for CIFAR-10).
+dataset_fraction: 0.2   # 20% of training split → 10k for CIFAR-10, 10k for CIFAR-100
+datasets: [cifar10, cifar100]
+
+# ── Architecture profile ──────────────────────────────────────────────────────
+# ViT-Tiny only for Phase 2 primary runs (DeiT-Small as optional follow-up)
+archs: [vit_tiny]
+
+# ── Phase 2 run count ─────────────────────────────────────────────────────────
+# 4 variants × 1 arch × 2 datasets × 1 seed = 8 training runs
+# At ~45 min/run on T4 → ~6 hours total (fits in Kaggle session)
