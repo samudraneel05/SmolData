@@ -1,2 +1,2 @@
 # SmolData
-compare CNNs and VITs and what features truly matter in small datasets
+compare CNNs and VITs and find what features truly matter in small datasets
