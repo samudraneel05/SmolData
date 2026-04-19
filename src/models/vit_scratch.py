@@ -155,6 +155,9 @@ class ViTScratch(nn.Module):
                 nn.init.trunc_normal_(m.weight, std=0.02)
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.LayerNorm):
+                nn.init.constant_(m.bias, 0)
+                nn.init.constant_(m.weight, 1.0)
 
     def forward_features(self, x: torch.Tensor) -> torch.Tensor:
         B = x.shape[0]
@@ -174,9 +177,10 @@ class ViTScratch(nn.Module):
 
 
 def vit_tiny(num_classes: int = 10, img_size: int = 32, **kwargs) -> ViTScratch:
-    """ViT-Tiny: embed_dim=192, depth=12, heads=3 (timm convention, but native res)."""
-    return ViTScratch(img_size=img_size, embed_dim=192, depth=12, num_heads=3,
-                      num_classes=num_classes, **kwargs)
+    """ViT-Tiny from 'Vision Transformers for Small datasets':
+    embed_dim=192, depth=9, heads=12, mlp_ratio=2.0 (approx 2.6M params)."""
+    return ViTScratch(img_size=img_size, embed_dim=192, depth=9, num_heads=12,
+                      mlp_ratio=2.0, num_classes=num_classes, **kwargs)
 
 
 def vit_small(num_classes: int = 10, img_size: int = 32, **kwargs) -> ViTScratch:

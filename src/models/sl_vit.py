@@ -136,9 +136,9 @@ class SLViT(nn.Module):
         in_channels: int = 3,
         num_classes: int = 10,
         embed_dim: int = 192,
-        depth: int = 12,
-        num_heads: int = 3,
-        mlp_ratio: float = 4.0,
+        depth: int = 9,
+        num_heads: int = 12,
+        mlp_ratio: float = 2.0,
         drop: float = 0.1,
     ) -> None:
         super().__init__()
