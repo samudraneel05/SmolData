@@ -4,23 +4,25 @@
 # Designed to complete full Phase 1+2 in < 8 hours on one GPU.
 # ─────────────────────────────────────────────────────────────────────────────
 
-optimizer: adam
-lr: 0.002
+optimizer: adamw          # AdamW is standard for ViT (Adam + decoupled weight decay)
+lr: 0.0005               # 5e-4 — ViT-scratch needs low LR; 2e-3 caused val collapse
 weight_decay: 0.05
 
-# Reduced epoch counts for single-GPU constraint
-epochs: 50              # was 100
-warmup_epochs: 5        # was 10
+# Epoch counts — ViT needs warmup to work at all
+epochs: 100              # 50 was too few for ViT-scratch to learn; 100 is the minimum
+warmup_epochs: 10        # 10% warmup is standard for ViT; critical to prevent early divergence
 clip_grad: 1.0
 label_smoothing: 0.1
 
 # Smaller batch for 16GB GPU RAM
-batch_size: 64          # was 256
+batch_size: 128          # 128 is the sweet spot on T4: faster than 64, fits in memory
 
-# Augmentation (unchanged — fairness requires identical pipeline)
-mixup_alpha: 0.4
+# Augmentation — MixUp alpha 0.4 + prob 1.0 was too aggressive for early training.
+# When a model has learned nothing, 100% mixed labels prevent any signal.
+# Alpha 0.2 and prob 0.5 gives clean-label epochs early in training to bootstrap.
+mixup_alpha: 0.2         # was 0.4 — gentler mixing
 cutmix_alpha: 1.0
-mixup_prob: 1.0
+mixup_prob: 0.5          # was 1.0 — only mix half the batches; clean batches help early
 mixup_switch_prob: 0.5
 
 # Self-supervised pre-training — highly reduced

@@ -16,7 +16,7 @@ from typing import Any, Dict, Optional
 
 import torch
 import torch.nn as nn
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 from torch.utils.data import DataLoader
@@ -63,21 +63,19 @@ def train_one_epoch(
     model.train()
     criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
     total_loss, correct, total = 0.0, 0, 0
+    amp_device = "cuda" if torch.cuda.is_available() else "cpu"
 
     for images, labels in tqdm(loader, leave=False, desc="train"):
         images, labels = images.to(device), labels.to(device)
 
-        if mixup is not None:
-            images, soft_labels = mixup(images, labels)
-        else:
-            soft_labels = torch.zeros(labels.size(0), criterion.ignore_index if hasattr(criterion, "ignore_index") else images.size(0), device=device)
-
         optimizer.zero_grad()
-        with autocast():
-            logits = model(images)
+        with autocast(device_type=amp_device):
             if mixup is not None:
+                images, soft_labels = mixup(images, labels)
+                logits = model(images)
                 loss = -(soft_labels * torch.log_softmax(logits, dim=1)).sum(dim=1).mean()
             else:
+                logits = model(images)
                 loss = criterion(logits, labels)
 
         scaler.scale(loss).backward()
@@ -133,7 +131,7 @@ def train(
         cfg.get("warmup_epochs", 10),
         len(train_loader),
     )
-    scaler = GradScaler()
+    scaler = GradScaler(device="cuda" if torch.cuda.is_available() else "cpu")
 
     mixup = Mixup(
         mixup_alpha=cfg.get("mixup_alpha", 0.4),
